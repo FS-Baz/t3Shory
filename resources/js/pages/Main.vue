@@ -11,7 +11,6 @@ interface Judgement {
     probabilities: Record<Verdict, number>;
 }
 
-const MIN_LENGTH = 10;
 const MAX_LENGTH = 300;
 const STEP_MS = 430;
 
@@ -39,7 +38,7 @@ let timers: number[] = [];
 
 const trimmed = computed(() => idea.value.trim());
 const canSubmit = computed(
-    () => trimmed.value.length >= MIN_LENGTH && phase.value !== 'judging',
+    () => trimmed.value.length > 0 && phase.value !== 'judging',
 );
 
 const verdictText = computed(() =>

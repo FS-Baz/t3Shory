@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Idea;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use App\Models\Idea;
 
 class IdeaController extends Controller
 {
     public function submit(Request $request): JsonResponse
     {
         $request->validate([
-            'idea' => ['required', 'string', 'min:10', 'max:300'],
+            'idea' => ['required', 'string', 'max:300'],
         ]);
 
         $response = Http::withToken(config('ai.providers.jev.key'))
@@ -40,31 +40,31 @@ class IdeaController extends Controller
         }
 
         // 0.99 → 99, 0.01 → 1
-        $toPct = fn($v) => (int) round(((float) $v) * 100);
+        $toPct = fn ($v) => (int) round(((float) $v) * 100);
 
-        $confidence       = $toPct($answer['confidence'] ?? 0);
-        $goProbability    = $toPct($answer['probabilities']['GO'] ?? 0);
-        $dontProbability  = $toPct($answer['probabilities']['DONT'] ?? 0);
-        $model            = $response['model'] ?? 'jev-latest';
+        $confidence = $toPct($answer['confidence'] ?? 0);
+        $goProbability = $toPct($answer['probabilities']['GO'] ?? 0);
+        $dontProbability = $toPct($answer['probabilities']['DONT'] ?? 0);
+        $model = $response['model'] ?? 'jev-latest';
 
         Idea::create([
-            'idea'             => $request->input('idea'),
-            'verdict'          => $answer['choice'],
-            'confidence'       => $confidence,
-            'go_probability'   => $goProbability,
+            'idea' => $request->input('idea'),
+            'verdict' => $answer['choice'],
+            'confidence' => $confidence,
+            'go_probability' => $goProbability,
             'dont_probability' => $dontProbability,
-            'model'            => $model,
+            'model' => $model,
         ]);
 
         return response()->json([
-            'model'   => $model,
+            'model' => $model,
             'answers' => [
                 'verdict' => [
-                    'type'          => 'choice',
-                    'choice'        => $answer['choice'],
-                    'confidence'    => $confidence / 100,      // back to 0–1 for the frontend
+                    'type' => 'choice',
+                    'choice' => $answer['choice'],
+                    'confidence' => $confidence / 100,      // back to 0–1 for the frontend
                     'probabilities' => [
-                        'GO'   => $goProbability / 100,
+                        'GO' => $goProbability / 100,
                         'DONT' => $dontProbability / 100,
                     ],
                 ],
